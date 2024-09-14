@@ -16,16 +16,42 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+      - name: Download users SDK
+        run: |
+          pwd
+          ls -l
+          export VERSION=`mvn help:evaluate -Dexpression=project.version -q -DforceStdout`
+          echo -e "VERSION=$VERSION"
+          export USERS_API_ARTIFACT_ID=`curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-users-service/actions/artifacts | jq '.artifacts[] | "\(.id) \(.name)"' | tr -d '"' | grep users-service-api | head -n 1 | awk '{print $1}'`
+          echo -e "artifact=$USERS_API_ARTIFACT_ID"
+          curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-users-service/actions/artifacts/$USERS_API_ARTIFACT_ID/zip > users_api_artifact.zip
+          unzip users_api_artifact.zip
+          ls -l
+          mvn install:install-file -Dfile=users-service-api-$VERSION.jar -DgroupId=io.oigres.ecomm -DartifactId=users-service-api -Dversion=$VERSION -Dpackaging=jar -DgeneratePom=true
+          rm users-service-api-$VERSION.jar
+          rm users_api_artifact.zip
+          ls -l
+          export USERS_SDK_ARTIFACT_ID=`curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-users-service/actions/artifacts | jq '.artifacts[] | "\(.id) \(.name)"' | tr -d '"' | grep users-service-sdk | head -n 1 | awk '{print $1}'`
+          echo -e "artifact=$USERS_API_ARTIFACT_ID"
+          curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-users-service/actions/artifacts/$USERS_SDK_ARTIFACT_ID/zip > users_sdk_artifact.zip
+          unzip users_sdk_artifact.zip
+          ls -l
+          mvn install:install-file -Dfile=users-service-sdk-$VERSION.jar -DgroupId=io.oigres.ecomm -DartifactId=users-service-sdk -Dversion=$VERSION -Dpackaging=jar -DgeneratePom=true
+          rm users-service-sdk-$VERSION.jar
+          rm users_sdk_artifact.zip
       - run: mvn --batch-mode --update-snapshots install
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload artifacts
+        id: upload-compiled-sources
         uses: actions/upload-artifact@v4.3.3
         with:
           name: compiled-sources
           path: ./
+    outputs:
+      compiled-sources-artifact-id: ${{ steps.upload-compiled-sources.outputs.artifact-id }}
 
   build-docker-image:
     name: Create docker image
@@ -54,5 +80,20 @@ jobs:
           platforms: linux/amd64
           push: false
           tags: sjexpos/ecomm-gateway:latest
+
+  delete-unused-artifact:
+    name: Delete unused artifact
+    needs: [build-app, build-docker-image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Artifact
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.actions.deleteArtifact({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: ${{ needs.build-app.outputs.compiled-sources-artifact-id }}
+            });
 
 # mvn jacoco:prepare-agent jacoco:report surefire:test
