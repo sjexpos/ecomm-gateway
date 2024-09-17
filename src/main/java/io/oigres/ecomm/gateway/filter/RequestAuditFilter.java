@@ -34,7 +34,7 @@ public class RequestAuditFilter implements RewriteFunction<String,String> {
         data.put("query", request.getQueryParams());
         data.put("headers", request.getHeaders());
         data.put("cookies", request.getCookies());
-        data.put("body", request.getBody());
+        data.put("body", requestBody);
         this.messageKafkaTemplate.send("audit", data);
         return requestBody == null ? Mono.empty() : Mono.just(requestBody);
     }

@@ -61,6 +61,6 @@ ecomm:
       enabled: true
       jwt:
         secret: Yn2kjibddFAWtnPJ2AFlL8WXmohJMCvigQggaEypa5E=
-    forward: http://localhost:9090
+    forward: http://localhost:5051
     users:
-      baseUri: http://localhost:9090
+      baseUri: http://localhost:6061

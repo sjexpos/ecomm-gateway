@@ -7,6 +7,7 @@
 [![Issues](https://img.shields.io/github/issues-search/sjexpos/ecomm-gateway?query=is%3Aopen&label=issues&style=plastic)](https://github.com/sjexpos/ecomm-gateway/issues)
 [![Commits](https://img.shields.io/github/last-commit/sjexpos/ecomm-gateway?logo=github&style=plastic)](https://github.com/sjexpos/ecomm-gateway/commits)
 
+![](docs/images/arch-gateway.png)
 
 This microservice is responsible for ...
 
