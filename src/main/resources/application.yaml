@@ -5,7 +5,7 @@ server:
 
 spring:
   application:
-    name: Ecomm Gateway
+    name: gateway
   cloud:
     gateway:
       globalcors:
@@ -50,8 +50,6 @@ management:
     sampling:
       probability: 1.0
 
-
-
 ecomm:
   service:
     tracing:
@@ -61,6 +59,9 @@ ecomm:
       enabled: true
       jwt:
         secret: Yn2kjibddFAWtnPJ2AFlL8WXmohJMCvigQggaEypa5E=
-    forward: http://localhost:5051
-    users:
-      baseUri: http://localhost:6061
+    gateway:
+      forward: http://localhost:5051
+      auth-server-uri: http://localhost:6061
+    limiter:
+      topics:
+        incoming-request: incoming-request-topic

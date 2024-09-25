@@ -36,6 +36,7 @@
     <jsonwebtoken.version>0.12.6</jsonwebtoken.version>
 
     <ecomm.users-service.version>0.1.0-SNAPSHOT</ecomm.users-service.version>
+    <ecomm.limiter-service.version>0.1.0-SNAPSHOT</ecomm.limiter-service.version>
   </properties>
 
   <developers>
@@ -125,7 +126,13 @@
         <artifactId>users-service-api</artifactId>
         <version>${ecomm.users-service.version}</version>
       </dependency>
-      
+
+      <dependency>
+        <groupId>io.oigres.ecomm</groupId>
+        <artifactId>limiter-service-model</artifactId>
+        <version>${ecomm.limiter-service.version}</version>
+      </dependency>
+
     </dependencies>
   </dependencyManagement>
 
@@ -194,6 +201,10 @@
     <dependency>
       <groupId>io.oigres.ecomm</groupId>
       <artifactId>users-service-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.oigres.ecomm</groupId>
+      <artifactId>limiter-service-model</artifactId>
     </dependency>
 
     <!-- Kafka -->

@@ -1,6 +1,7 @@
 package io.oigres.ecomm.gateway.filter;
 
-import org.springframework.beans.factory.annotation.Value;
+import io.oigres.ecomm.gateway.config.AuthenticationProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -17,28 +18,24 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 /**
- * This filter intercepts securized request and checks if the jwt token is valid and it is not expired.
+ * This filter intercepts secured request and checks if the jwt token is valid, and it is not expired.
  * 
  * @author sjexpos@gmail.com
  */
 @Component
 @RefreshScope
 @Slf4j
+@RequiredArgsConstructor
 public class AuthFilter implements GatewayFilter {
+    public static final String CURRENT_USER_CLAIMS_REQUEST_ATTR = "CURRENT_USER_CLAIMS_REQUEST_ATTR";
 
     private final RouteValidator routeValidator;
     private final JWTUtil jwtUtil;
-    private final boolean authEnabled;
-
-    public AuthFilter(RouteValidator routeValidator, JWTUtil jwtUtil, @Value("${ecomm.service.authentication.enabled}") boolean authEnabled) {
-        this.routeValidator = routeValidator;
-        this.jwtUtil = jwtUtil;
-        this.authEnabled = authEnabled;
-    }
+    private final AuthenticationProperties authenticationProperties;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        if(!authEnabled) {
+        if(!this.authenticationProperties.isEnabled()) {
             log.info("Authentication is disabled. To enable it, make \"authentication.enabled\" property as true");
             return chain.filter(exchange);
         }
@@ -64,11 +61,7 @@ public class AuthFilter implements GatewayFilter {
 
     private void populateRequestWithHeaders(ServerWebExchange exchange, String token) {
         Claims claims = jwtUtil.getAllClaims(token);
-        exchange.getRequest()
-                .mutate()
-                .header("id",String.valueOf(claims.get("id")))
-                .header("role", String.valueOf(claims.get("role")))
-                .build();
+        exchange.getAttributes().put(CURRENT_USER_CLAIMS_REQUEST_ATTR, claims);
     }
 
 }

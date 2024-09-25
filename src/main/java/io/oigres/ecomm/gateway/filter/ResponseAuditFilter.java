@@ -1,14 +1,20 @@
 package io.oigres.ecomm.gateway.filter;
 
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
+import io.jsonwebtoken.Claims;
+import io.oigres.ecomm.service.limiter.ResponseAudit;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
 
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +30,31 @@ public class ResponseAuditFilter implements GatewayFilter {
         this.messageKafkaTemplate = messageKafkaTemplate;
     }
 
+    private Map<String, List<ResponseAudit.HttpCookie>> getCookies(MultiValueMap<String, ResponseCookie> cookies) {
+        if (cookies == null) {
+            return null;
+        }
+        return cookies.entrySet().stream()
+                .collect(
+                        Collectors.toMap(
+                                Map.Entry::getKey,
+                                e -> e.getValue().stream().map(c ->
+                                        ResponseAudit.HttpCookie.builder()
+                                                .name(c.getName())
+                                                .value(c.getValue())
+                                                .maxAge(c.getMaxAge())
+                                                .domain(c.getDomain())
+                                                .path(c.getPath())
+                                                .secure(c.isSecure())
+                                                .httpOnly(c.isHttpOnly())
+                                                .sameSite(c.getSameSite())
+                                                .build()
+                                ).toList()
+                        )
+                );
+    }
+
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
@@ -31,13 +62,17 @@ public class ResponseAuditFilter implements GatewayFilter {
         try {
             return chain.filter(exchange);
         } finally {
-            Map<String,Object> data = new HashMap<>();
-            data.put("id", request.getId());
-            data.put("headers", response.getHeaders());
-            data.put("cookies", response.getCookies());
-            data.put("status", response.getStatusCode().value());
-            this.messageKafkaTemplate.send("audit", data);
+            Claims claims = exchange.getAttribute(AuthFilter.CURRENT_USER_CLAIMS_REQUEST_ATTR);
+            if (claims != null) {
+                ResponseAudit audit = ResponseAudit.builder()
+                        .id(request.getId())
+                        .userId(claims.getSubject())
+                        .headers(response.getHeaders())
+                        .cookies(getCookies(response.getCookies()))
+                        .build();
+                this.messageKafkaTemplate.sendDefault(audit);
             }
+        }
     }
 
 }
