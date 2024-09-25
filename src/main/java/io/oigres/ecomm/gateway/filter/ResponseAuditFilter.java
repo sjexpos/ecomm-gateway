@@ -1,5 +1,6 @@
 package io.oigres.ecomm.gateway.filter;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -69,8 +70,10 @@ public class ResponseAuditFilter implements GatewayFilter {
                         .userId(claims.getSubject())
                         .headers(response.getHeaders())
                         .cookies(getCookies(response.getCookies()))
+                        .status(response.getStatusCode().value())
+                        .arrived(LocalDateTime.now())
                         .build();
-                this.messageKafkaTemplate.sendDefault(audit);
+                this.messageKafkaTemplate.sendDefault(audit.getUserId(), audit);
             }
         }
     }

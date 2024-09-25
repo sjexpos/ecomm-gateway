@@ -60,7 +60,7 @@ public class RequestAuditFilter implements RewriteFunction<String,String> {
                     .arrived(LocalDateTime.now())
                     .build();
 
-            this.messageKafkaTemplate.sendDefault(audit);
+            this.messageKafkaTemplate.sendDefault(audit.getUserId(), audit);
         }
         return requestBody == null ? Mono.empty() : Mono.just(requestBody);
     }

@@ -17,8 +17,10 @@ spring:
     bootstrap-servers: localhost:9092
     consumer:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      observation-enabled: true
     producer:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      observation-enabled: true
     listener:
       observation-enabled: true
 
