@@ -213,6 +213,13 @@
       <artifactId>spring-kafka</artifactId>
     </dependency>
 
+    <!-- Cloud Native Spring Admin connector -->
+    <dependency>
+      <groupId>de.codecentric</groupId>
+      <artifactId>spring-boot-admin-starter-client</artifactId>
+      <version>${spring-boot.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
@@ -336,12 +343,10 @@
             <id>repackage</id>
             <goals>
               <goal>repackage</goal>
+              <goal>build-info</goal>
             </goals>
           </execution>
         </executions>
-        <configuration>
-          <mainClass>${start-class}</mainClass>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
