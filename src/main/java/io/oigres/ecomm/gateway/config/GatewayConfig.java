@@ -1,14 +1,10 @@
 package io.oigres.ecomm.gateway.config;
 
+import io.oigres.ecomm.gateway.filter.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 
-import io.oigres.ecomm.gateway.filter.AuthFilter;
-import io.oigres.ecomm.gateway.filter.OpenApiEnhacementRewriteFunction;
-import io.oigres.ecomm.gateway.filter.RequestAuditFilter;
-import io.oigres.ecomm.gateway.filter.ResponseAuditFilter;
-import io.oigres.ecomm.gateway.filter.SignInRewriteFunction;
 import io.oigres.ecomm.gateway.validator.RouteValidator;
 
 import org.springframework.cloud.gateway.route.RouteLocator;
@@ -26,6 +22,7 @@ public class GatewayConfig {
             OpenApiEnhacementRewriteFunction openApiEnhacementRewriteFunction,
             RequestAuditFilter requestAuditFilter,
             ResponseAuditFilter responseAuditFilter,
+            RequestLimiter requestLimiter,
             GatewayProperties gatewayProperties
     ) {
         return builder.routes()
@@ -44,6 +41,7 @@ public class GatewayConfig {
                         .uri(gatewayProperties.getAuthServerUri()))
                 .route("secure_endpoints", r -> r.path(RouteValidator.INTERCEPTED_PATH)
                         .filters(f -> f.filter(authFilter)
+                            .filter(requestLimiter)
                             .modifyRequestBody(String.class, String.class, requestAuditFilter)
                             .filter(responseAuditFilter)
                         )

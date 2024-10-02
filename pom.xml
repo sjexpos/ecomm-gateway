@@ -34,6 +34,9 @@
     <swagger-annotations.version>2.2.22</swagger-annotations.version>
     <springdoc.version>2.6.0</springdoc.version>
     <jsonwebtoken.version>0.12.6</jsonwebtoken.version>
+    <redisson-spring-boot-starter.version>3.36.0</redisson-spring-boot-starter.version>
+    <caffeine.version>3.1.8</caffeine.version>
+    <mapstruct.version>1.6.2</mapstruct.version>
 
     <ecomm.users-service.version>0.1.0-SNAPSHOT</ecomm.users-service.version>
     <ecomm.limiter-service.version>0.1.0-SNAPSHOT</ecomm.limiter-service.version>
@@ -120,7 +123,25 @@
         <artifactId>jjwt-jackson</artifactId>
         <version>${jsonwebtoken.version}</version>
       </dependency>
-      
+
+      <dependency>
+        <groupId>org.redisson</groupId>
+        <artifactId>redisson-spring-boot-starter</artifactId>
+        <version>${redisson-spring-boot-starter.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.github.ben-manes.caffeine</groupId>
+        <artifactId>caffeine</artifactId>
+        <version>${caffeine.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.mapstruct</groupId>
+        <artifactId>mapstruct</artifactId>
+        <version>${mapstruct.version}</version>
+      </dependency>
+
       <dependency>
         <groupId>io.oigres.ecomm</groupId>
         <artifactId>users-service-api</artifactId>
@@ -130,6 +151,12 @@
       <dependency>
         <groupId>io.oigres.ecomm</groupId>
         <artifactId>limiter-service-model</artifactId>
+        <version>${ecomm.limiter-service.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>io.oigres.ecomm</groupId>
+        <artifactId>cache-lib</artifactId>
         <version>${ecomm.limiter-service.version}</version>
       </dependency>
 
@@ -155,7 +182,12 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
-    
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-aop</artifactId>
+    </dependency>
+
     <!-- Open API 3 Model -->
     <dependency>
       <groupId>io.swagger.core.v3</groupId>
@@ -169,6 +201,21 @@
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.redisson</groupId>
+      <artifactId>redisson-spring-boot-starter</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.ben-manes.caffeine</groupId>
+      <artifactId>caffeine</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
     </dependency>
 
     <!-- Distributed tracing -->
@@ -205,6 +252,10 @@
     <dependency>
       <groupId>io.oigres.ecomm</groupId>
       <artifactId>limiter-service-model</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.oigres.ecomm</groupId>
+      <artifactId>cache-lib</artifactId>
     </dependency>
 
     <!-- Kafka -->
@@ -283,6 +334,18 @@
           <source>${maven.compiler.source}</source>
           <target>${maven.compiler.target}</target>
           <encoding>${project.build.sourceEncoding}</encoding>
+          <parameters>true</parameters> <!-- store method argument names on byte code. Useful for spring SPEL -->
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+            </path>
+            <path>
+              <groupId>org.mapstruct</groupId>
+              <artifactId>mapstruct-processor</artifactId>
+              <version>${mapstruct.version}</version>
+            </path>
+          </annotationProcessorPaths>
         </configuration>
       </plugin>
       <plugin>

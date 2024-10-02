@@ -10,7 +10,7 @@ spring:
         # Cloud Native Spring Admin Server is running
         url: http://localhost:9090
   application:
-    name: gateway
+    name: gateway-${ecomm.service.gateway.forward-api-name}
   cloud:
     gateway:
       globalcors:
@@ -21,13 +21,36 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
     consumer:
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: gateway-${ecomm.service.gateway.forward-api-name}
+      max-poll-records: 100
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
       observation-enabled: true
     producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       observation-enabled: true
     listener:
       observation-enabled: true
+  cache:
+    type: redis
+    redis:
+      cache-null-values: true
+      use-key-prefix: true
+      key-prefix: ECOMM-GATEWAY
+      time-to-live: 5000
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      ssl:
+        enabled: false
+      connectTimeout: 5000
+      timeout: 1000
 
 springdoc:
   api-docs:
@@ -62,13 +85,15 @@ ecomm:
     tracing:
       url: http://localhost:4318/v1/traces
     authentication:
-      scope: mobile
+      scope: ${ecomm.service.gateway.forward-api-name}
       enabled: true
       jwt:
         secret: Yn2kjibddFAWtnPJ2AFlL8WXmohJMCvigQggaEypa5E=
     gateway:
+      forward-api-name: admin
       forward: http://localhost:5051
       auth-server-uri: http://localhost:6061
     limiter:
       topics:
         incoming-request: incoming-request-topic
+        blacklisted-users: blacklisted-users-topic

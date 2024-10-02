@@ -14,6 +14,9 @@ public class LimiterServiceProperties {
         @NotNull
         @NotBlank
         private String incomingRequest;
+        @NotNull
+        @NotBlank
+        private String blacklistedUsers;
     }
 
     @NotNull
