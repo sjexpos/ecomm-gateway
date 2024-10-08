@@ -7,6 +7,9 @@
 [![Issues](https://img.shields.io/github/issues-search/sjexpos/ecomm-gateway?query=is%3Aopen&label=issues&style=plastic)](https://github.com/sjexpos/ecomm-gateway/issues)
 [![Commits](https://img.shields.io/github/last-commit/sjexpos/ecomm-gateway?logo=github&style=plastic)](https://github.com/sjexpos/ecomm-gateway/commits)
 
+[![Docker pulls](https://img.shields.io/docker/pulls/sjexposecomm/gateway?logo=docker&style=plastic)](https://hub.docker.com/r/sjexposecomm/gateway)
+[![Docker size](https://img.shields.io/docker/image-size/sjexposecomm/gateway?logo=docker&style=plastic)](https://hub.docker.com/r/sjexposecomm/gateway/tags)
+
 ![](docs/images/arch-gateway.png)
 
 This microservice is responsible for ...
