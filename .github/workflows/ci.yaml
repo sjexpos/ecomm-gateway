@@ -94,8 +94,8 @@ jobs:
           context: ./
           file: Dockerfile
           platforms: linux/amd64
-          push: false
-          tags: sjexpos/ecomm-gateway:latest
+          push: true
+          tags: sjexposecomm/gateway:latest
 
   delete-unused-artifact:
     name: Delete unused artifact
