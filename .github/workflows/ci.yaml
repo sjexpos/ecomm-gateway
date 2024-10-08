@@ -16,7 +16,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
-      - name: Download users SDK
+      - name: Download dependencies
         run: |
           pwd
           ls -l
@@ -32,13 +32,29 @@ jobs:
           rm users_api_artifact.zip
           ls -l
           export USERS_SDK_ARTIFACT_ID=`curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-users-service/actions/artifacts | jq '.artifacts[] | "\(.id) \(.name)"' | tr -d '"' | grep users-service-sdk | head -n 1 | awk '{print $1}'`
-          echo -e "artifact=$USERS_API_ARTIFACT_ID"
+          echo -e "artifact=$USERS_SDK_ARTIFACT_ID"
           curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-users-service/actions/artifacts/$USERS_SDK_ARTIFACT_ID/zip > users_sdk_artifact.zip
           unzip users_sdk_artifact.zip
           ls -l
           mvn install:install-file -Dfile=users-service-sdk-$VERSION.jar -DgroupId=io.oigres.ecomm -DartifactId=users-service-sdk -Dversion=$VERSION -Dpackaging=jar -DgeneratePom=true
           rm users-service-sdk-$VERSION.jar
           rm users_sdk_artifact.zip
+          export LIMITER_MODEL_ARTIFACT_ID=`curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-limiter/actions/artifacts | jq '.artifacts[] | "\(.id) \(.name)"' | tr -d '"' | grep limiter-service-model | head -n 1 | awk '{print $1}'`
+          echo -e "artifact=$LIMITER_MODEL_ARTIFACT_ID"
+          curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-limiter/actions/artifacts/$LIMITER_MODEL_ARTIFACT_ID/zip > limiter_model_artifact.zip
+          unzip limiter_model_artifact.zip
+          ls -l
+          mvn install:install-file -Dfile=limiter-service-model-$VERSION.jar -DgroupId=io.oigres.ecomm -DartifactId=limiter-service-model -Dversion=$VERSION -Dpackaging=jar -DgeneratePom=true
+          rm limiter-service-model-$VERSION.jar
+          rm limiter_model_artifact.zip
+          export CACHE_LIB_ARTIFACT_ID=`curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-limiter/actions/artifacts | jq '.artifacts[] | "\(.id) \(.name)"' | tr -d '"' | grep cache-lib | head -n 1 | awk '{print $1}'`
+          echo -e "artifact=$CACHE_LIB_ARTIFACT_ID"
+          curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-limiter/actions/artifacts/$CACHE_LIB_ARTIFACT_ID/zip > cache_lib_artifact.zip
+          unzip cache_lib_artifact.zip
+          ls -l
+          mvn install:install-file -Dfile=cache-lib-$VERSION.jar -DgroupId=io.oigres.ecomm -DartifactId=cache-lib -Dversion=$VERSION -Dpackaging=jar -DgeneratePom=true
+          rm cache-lib-$VERSION.jar
+          rm cache_lib_artifact.zip
       - run: mvn --batch-mode --update-snapshots install
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1

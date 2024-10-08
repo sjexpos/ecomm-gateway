@@ -21,12 +21,15 @@
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
     <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+    <maven-surefire-plugin.version>3.3.1</maven-surefire-plugin.version>
+    <maven-failsafe-plugin.version>3.3.1</maven-failsafe-plugin.version>
     <native-maven-plugin.version>0.9.28</native-maven-plugin.version>
     <maven-deploy-plugin.version>3.1.2</maven-deploy-plugin.version>
     <git-commit-id-plugin.version>4.9.10</git-commit-id-plugin.version>
     <build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
     <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
     <spring-boot-maven-plugin.version>3.3.2</spring-boot-maven-plugin.version>
+    <fabric8-maven-plugin.version>0.45.0</fabric8-maven-plugin.version>
 
     <spring-boot.version>3.3.2</spring-boot.version>
     <spring-cloud.version>2023.0.3</spring-cloud.version>
@@ -40,6 +43,11 @@
 
     <ecomm.users-service.version>0.1.0-SNAPSHOT</ecomm.users-service.version>
     <ecomm.limiter-service.version>0.1.0-SNAPSHOT</ecomm.limiter-service.version>
+
+    <tests.redis.hostname>localhost</tests.redis.hostname>
+    <tests.redis.port>6379</tests.redis.port>
+    <tests.kafka.hostname>localhost</tests.kafka.hostname>
+    <tests.kafka.port>9092</tests.kafka.port>
   </properties>
 
   <developers>
@@ -276,6 +284,13 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>build-helper-maven-plugin</artifactId>
+      <version>${build-helper-maven-plugin.version}</version>
+      <type>maven-plugin</type>
+    </dependency>
   </dependencies>
 
   <build>
@@ -347,6 +362,42 @@
             </path>
           </annotationProcessorPaths>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
+        <configuration>
+          <excludes>
+            <exclude>**/*ITest</exclude>
+            <exclude>**/*ITests</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${maven-failsafe-plugin.version}</version>
+        <configuration>
+          <classesDirectory>${project.build.outputDirectory}</classesDirectory>
+          <argLine> <!-- it allows to override env vars using JUnit pioneer extension on Java 17 and later  -->
+              --add-opens java.base/java.util=ALL-UNNAMED
+              --add-opens java.base/java.lang=ALL-UNNAMED
+          </argLine>          
+          <summaryFile>${project.build.directory}/site/failsafe-summary.xml</summaryFile>
+          <includes>
+            <include>**/*ITest</include>
+            <include>**/*ITests</include>
+          </includes>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.graalvm.buildtools</groupId>
@@ -445,4 +496,183 @@
     </plugins>
   </build>
 
+  <profiles>
+    <profile>
+      <id>local-windows</id>
+      <activation>
+        <os><family>windows</family></os>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>local-unix</id>
+      <activation>
+        <os><family>unix</family></os>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <version>${fabric8-maven-plugin.version}</version>
+            <executions>
+              <execution>
+                <id>prepare-it-redis</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>start</goal>
+                </goals>
+                <configuration>
+                  <skip>${skipTests}</skip>
+                  <images>
+                    <image>
+                      <name>redis:6.2.2</name>
+                      <alias>it-redis</alias>
+                      <run>
+                        <ports>
+                          <port>6379:${tests.redis.port}</port>
+                        </ports>
+                        <wait>
+                          <tcp>
+                            <ports>
+                              <port>${tests.redis.port}</port>
+                            </ports>
+                          </tcp>
+                          <time>20000</time>
+                        </wait>
+                        <log>
+                          <enabled>true</enabled>
+                          <prefix>[REDIS-6.2.2]</prefix>
+                          <date>NONE</date>
+                          <color>yellow</color>
+                        </log>
+                      </run>
+                    </image>
+                  </images>
+                </configuration>
+              </execution>
+              <execution>
+                <id>prepare-it-zookeeper</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>start</goal>
+                </goals>
+                <configuration>
+                  <skip>${skipTests}</skip>
+                  <autoCreateCustomNetworks>true</autoCreateCustomNetworks>
+                  <containerNamePattern>%a</containerNamePattern>
+                  <images>
+                    <image>
+                      <name>confluentinc/cp-zookeeper:7.7.0</name>
+                      <alias>it-zookeeper</alias>
+                      <run>
+                        <hostname>it-zookeeper</hostname>
+                        <env>
+                          <ZOOKEEPER_CLIENT_PORT>2181</ZOOKEEPER_CLIENT_PORT>
+                          <ZOOKEEPER_TICK_TIME>2000</ZOOKEEPER_TICK_TIME>
+                        </env>
+                        <ports>
+                          <port>22181:2181</port>
+                        </ports>
+                        <network>
+                          <name>it-network</name>
+                          <alias>it-zookeeper</alias>
+                        </network>
+                        <wait>
+                          <tcp>
+                            <ports>
+                              <port>2181</port>
+                            </ports>
+                          </tcp>
+                          <time>20000</time>
+                        </wait>
+                        <log>
+                          <enabled>true</enabled>
+                          <prefix>[ZOOKEEPER-7.7.0]</prefix>
+                          <date>NONE</date>
+                          <color>red</color>
+                        </log>
+                      </run>
+                    </image>
+                  </images>
+                </configuration>
+              </execution>
+              <execution>
+                <id>prepare-it-kafka</id>
+                <phase>pre-integration-test</phase>
+                <goals>
+                  <goal>start</goal>
+                </goals>
+                <configuration>
+                  <skip>${skipTests}</skip>
+                  <autoCreateCustomNetworks>true</autoCreateCustomNetworks>
+                  <containerNamePattern>%a</containerNamePattern>
+                  <images>
+                    <image>
+                      <name>confluentinc/cp-kafka:7.7.0</name>
+                      <alias>container</alias>
+                      <run>
+                        <env>
+                          <KAFKA_BROKER_ID>1</KAFKA_BROKER_ID>
+                          <KAFKA_ZOOKEEPER_CONNECT>it-zookeeper:2181</KAFKA_ZOOKEEPER_CONNECT>
+                          <KAFKA_ADVERTISED_LISTENERS>PLAINTEXT://localhost:${tests.kafka.port},PLAINTEXT_HOST://localhost:9093</KAFKA_ADVERTISED_LISTENERS>
+                          <KAFKA_LISTENER_SECURITY_PROTOCOL_MAP>PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT</KAFKA_LISTENER_SECURITY_PROTOCOL_MAP>
+                          <KAFKA_INTER_BROKER_LISTENER_NAME>PLAINTEXT</KAFKA_INTER_BROKER_LISTENER_NAME>
+                          <KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR>1</KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR>
+                        </env>
+                        <ports>
+                          <port>9092:${tests.kafka.port}</port>
+                          <port>9093:9093</port>
+                        </ports>
+                        <network>
+                          <name>it-network</name>
+                          <alias>it-kafka</alias>
+                        </network>
+                        <dependsOn>
+                          <container>it-zookeeper</container>
+                        </dependsOn>
+                        <wait>
+                          <tcp>
+                            <ports>
+                              <port>${tests.kafka.port}</port>
+                            </ports>
+                          </tcp>
+                          <time>20000</time>
+                        </wait>
+                        <log>
+                          <enabled>true</enabled>
+                          <prefix>[KAFKA-7.7.0]</prefix>
+                          <date>NONE</date>
+                          <color>blue</color>
+                        </log>
+                      </run>
+                    </image>
+                  </images>
+                </configuration>
+              </execution>
+              <execution>
+                <id>remove-it-database</id>
+                <phase>post-integration-test</phase>
+                <goals>
+                  <goal>stop</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
 </project>
+
