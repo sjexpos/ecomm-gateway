@@ -20,14 +20,14 @@ import java.time.LocalDateTime;
 @Slf4j
 @RequiredArgsConstructor
 public class RequestLimiter implements GatewayFilter {
-    private final BlockedUserService blackedUserService;
+    private final BlockedUserService blockedUserService;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         Claims claims = exchange.getAttribute(AuthFilter.CURRENT_USER_CLAIMS_REQUEST_ATTR);
         if (claims != null) {
             String userId = claims.getSubject();
-            BlockedUser blockedUser = this.blackedUserService.retrieveBlockedUserFor(userId);
+            BlockedUser blockedUser = this.blockedUserService.retrieveBlockedUserFor(userId);
             if (blockedUser != null && blockedUser.isBlock(LocalDateTime.now()) ) {
                 exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
                 return exchange.getResponse().setComplete();

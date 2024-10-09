@@ -20,7 +20,7 @@ import reactor.core.publisher.Mono;
 /**
  * This filter intercepts secured request and checks if the jwt token is valid, and it is not expired.
  * 
- * @author sjexpos@gmail.com
+ * @author sergio.exposito (sjexpos@gmail.com)
  */
 @Component
 @RefreshScope
@@ -59,6 +59,12 @@ public class AuthFilter implements GatewayFilter {
         return chain.filter(exchange);
     }
 
+    /**
+     * Sticks user information to the current request/response interaction.
+     *
+     * @param exchange ServerWebExchange object
+     * @param token JWT token which was gotten from Authorization header
+     */
     private void populateRequestWithHeaders(ServerWebExchange exchange, String token) {
         Claims claims = jwtUtil.getAllClaims(token);
         exchange.getAttributes().put(CURRENT_USER_CLAIMS_REQUEST_ATTR, claims);

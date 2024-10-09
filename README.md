@@ -12,7 +12,7 @@
 
 ![](docs/images/arch-gateway.png)
 
-This microservice is responsible for ...
+This component is responsible for implement the entrypoint for each backend for frontend service. It adds request rate limit per user and unified authorization/authentication.
 
 ```mermaid
 zenuml
@@ -76,3 +76,26 @@ mvn clean tests
 ./run.sh
 ```
 
+## Run test from IDE
+
+All integration test need Kafka and Redis running locally. All servers are started by maven before that those tests are run.
+When a test has to be run into an IDE the servers are not running.
+But it can be fixed if the following command is run in this folder:
+
+```bash
+> mvn pre-integration-test
+```
+
+This command will run all plugin which were defined on this maven phase.
+
+When the servers must be shutdowned the command `mvn post-integration-test` won't work. So, it is need to use docker stop.
+
+```bash
+> docker stop -t 1 <kafka container id> <zookeper container id> <redis container id>
+```
+
+The container ids can be gotten using:
+
+```bash
+> docker ps
+```

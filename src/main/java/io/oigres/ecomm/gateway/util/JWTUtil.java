@@ -16,6 +16,11 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 
+/**
+ * Utility class to handle JWT tokens.
+ *
+ * @author sergio.exposito (sjexpos@gmail.com)
+ */
 @Component
 public class JWTUtil {
 
@@ -30,6 +35,12 @@ public class JWTUtil {
         this.scope = scope;
     }
 
+    /**
+     * Gets claims from a valid JWT token
+     *
+     * @param token a valid JWT token as string
+     * @return a Claims object
+     */
     public Claims getAllClaims(String token) {
         return (Claims)Jwts.parser()
             .verifyWith(secret)
@@ -38,10 +49,22 @@ public class JWTUtil {
             .getPayload();
     }
 
+    /**
+     * Checks if a token has expired or not.
+     *
+     * @param token a valid JWT token as string
+     * @return true if the token have not expired, false otherwise.
+     */
     private boolean isTokenExpired(String token ) {
         return this.getAllClaims(token).getExpiration().before(new Date());
     }
 
+    /**
+     * Checks if a JWT token is well formatted, has a good sign and is not expired.
+     *
+     * @param token a JWT token
+     * @return true if the token has any error, false otherwise.
+     */
     public boolean isInvalid(String token) {
         try {
             return this.isTokenExpired(token);
@@ -50,6 +73,12 @@ public class JWTUtil {
         }
     }
 
+    /**
+     * Creates a JWT token from the ValidateUserResponse object.
+     *
+     * @param validateUserResponse a response from auth service.
+     * @return a valid JWT token
+     */
     public String createToken(ValidateUserResponse validateUserResponse) {
         LocalDate exp = LocalDate.now().plusMonths(3);
         return Jwts.builder()

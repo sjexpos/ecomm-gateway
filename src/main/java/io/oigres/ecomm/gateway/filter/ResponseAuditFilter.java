@@ -21,6 +21,12 @@ import org.springframework.web.server.ServerWebExchange;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+/**
+ * Filter class which creates a ResponseAudit object from the http response, and put it in a topic.
+ * This message will be received by limiter service.
+ *
+ * @author sergio.exposito (sjexpos@gmail.com)
+ */
 @Component
 @Slf4j
 public class ResponseAuditFilter implements GatewayFilter {

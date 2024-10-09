@@ -34,6 +34,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Configures two level cache (caffeine and redis). Also it defines a gzip serializer to send data to redis.
+ *
+ * @author sergio.exposito (sjexpos@gmail.com)
+ */
 @Configuration
 @EnableConfigurationProperties(RedisProperties.class)
 @EnableCaching(mode = AdviceMode.PROXY)

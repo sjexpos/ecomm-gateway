@@ -55,7 +55,7 @@ import reactor.core.publisher.Mono;
  * and enhances it with security schema, authorization error response and adds
  * the sign-in endpoint.
  * 
- * @author sjexpos@gmail.com
+ * @author sergio.exposito (sjexpos@gmail.com)
  */
 @Component
 @Slf4j

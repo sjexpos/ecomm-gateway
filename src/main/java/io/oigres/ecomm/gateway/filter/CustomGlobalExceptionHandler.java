@@ -23,6 +23,11 @@ import org.springframework.web.server.ResponseStatusException;
 import io.oigres.ecomm.gateway.exceptions.UnauthorizedException;
 import reactor.core.publisher.Mono;
 
+/**
+ * Process exceptions to reach unified error format.
+ *
+ * @author sergio.exposito (sjexpos@gmail.com)
+ */
 @Component
 public class CustomGlobalExceptionHandler extends AbstractErrorWebExceptionHandler {
 

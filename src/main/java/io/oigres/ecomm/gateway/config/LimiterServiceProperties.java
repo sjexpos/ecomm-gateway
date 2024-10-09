@@ -5,6 +5,11 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * Properties to configure kafka topic when this gateway must send and receive messages.
+ *
+ * @author sergio.exposito (sjexpos@gmail.com)
+ */
 @Data
 @ConfigurationProperties(prefix = "ecomm.service.limiter")
 public class LimiterServiceProperties {

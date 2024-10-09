@@ -14,6 +14,11 @@ import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Prints some important properties by console when application starts up.
+ *
+ * @author sergio.exposito (sjexpos@gmail.com)
+ */
 @Component
 @Order(0)
 @Slf4j

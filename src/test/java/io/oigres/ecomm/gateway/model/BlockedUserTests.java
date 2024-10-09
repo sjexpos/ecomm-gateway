@@ -14,7 +14,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
-public class BlockedUserTest {
+public class BlockedUserTests {
     static private ObjectMapper mapper;
 
     @BeforeAll

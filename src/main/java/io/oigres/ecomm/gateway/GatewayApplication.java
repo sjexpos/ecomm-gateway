@@ -6,6 +6,11 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 import reactor.core.publisher.Hooks;
 
+/**
+ * Bootstrap spring boot class.
+ *
+ * @author sergio.exposito (sjexpos@gmail.com)
+ */
 @SpringBootApplication
 @ConfigurationPropertiesScan
 public class GatewayApplication {

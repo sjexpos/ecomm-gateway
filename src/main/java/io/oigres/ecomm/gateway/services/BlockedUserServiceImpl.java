@@ -16,6 +16,11 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
+/**
+ * Service class to store and retrieve blocked users from cache.
+ *
+ * @author sergio.exposito (sjexpos@gmail.com)
+ */
 @Slf4j
 @Service
 public class BlockedUserServiceImpl implements BlockedUserService {
@@ -47,17 +52,17 @@ public class BlockedUserServiceImpl implements BlockedUserService {
             return;
         }
         Cache redisCache = this.redisCacheManager.getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
-        BlockedUser blockedUser = redisCache.get(info.getUserId(), BlockedUser.class);
-        if  (blockedUser == null || !blockedUser.isBlock(LocalDateTime.now())) {
-            blockedUser = this.mapper.from(info);
-            updateCachedBlockedUser(blockedUser);
-        } else if (!blockedUser.isBlock(info.getFrom()) || !blockedUser.isBlock(info.getTo())) {
-            blockedUser = BlockedUser.builder()
+        BlockedUser cachedBlockedUser = redisCache.get(info.getUserId(), BlockedUser.class);
+        if  (cachedBlockedUser == null || !cachedBlockedUser.isBlock(LocalDateTime.now())) {
+            cachedBlockedUser = this.mapper.from(info);
+            updateCachedBlockedUser(cachedBlockedUser);
+        } else if (!cachedBlockedUser.isBlock(info.getFrom()) || !cachedBlockedUser.isBlock(info.getTo())) {
+            cachedBlockedUser = BlockedUser.builder()
                     .userId(info.getUserId())
-                    .from(Stream.of(info.getFrom(), blockedUser.getFrom()).min(LocalDateTime::compareTo).get())
-                    .to(Stream.of(info.getTo(), blockedUser.getTo()).min(LocalDateTime::compareTo).get())
+                    .from(Stream.of(info.getFrom(), cachedBlockedUser.getFrom()).min(LocalDateTime::compareTo).get())
+                    .to(Stream.of(info.getTo(), cachedBlockedUser.getTo()).min(LocalDateTime::compareTo).get())
                     .build();
-            updateCachedBlockedUser(blockedUser);
+            updateCachedBlockedUser(cachedBlockedUser);
         }
     }
 

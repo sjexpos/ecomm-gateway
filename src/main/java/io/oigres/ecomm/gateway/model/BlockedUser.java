@@ -7,6 +7,11 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO class which will be stored in cache when the user reaches its rate limit.
+ *
+ * @author sergio.exposito (sjexpos@gmail.com)
+ */
 @Builder
 @Getter
 @NoArgsConstructor

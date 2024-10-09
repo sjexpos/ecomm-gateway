@@ -5,6 +5,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
 
+/**
+ * DTO object which is respond then the user sign-in.
+ *
+ * @author sergio.exposito (sjexpos@gmail.com)
+ */
 @Builder
 @Getter
 public class SignInResponse {

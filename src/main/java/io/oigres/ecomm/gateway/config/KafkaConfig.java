@@ -9,6 +9,12 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 
+/**
+ * Configures kafka access. It creates a template to send message to limiter service for each request/response interaction,
+ * and receive message from it when a limit is reached.
+ *
+ * @author sergio.exposito (sjexpos@gmail.com)
+ */
 @Configuration
 @EnableKafka
 public class KafkaConfig {

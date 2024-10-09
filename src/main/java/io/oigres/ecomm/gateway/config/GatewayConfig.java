@@ -10,6 +10,11 @@ import io.oigres.ecomm.gateway.validator.RouteValidator;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 
+/**
+ * Configures path forwarding and Open Api 3.0 document transformation to add security scope on each forwarding endpoint.
+ *
+ * @author sergio.exposito (sjexpos@gmail.com)
+ */
 @Configuration
 public class GatewayConfig {
 
