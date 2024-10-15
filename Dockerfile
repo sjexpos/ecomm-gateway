@@ -8,6 +8,7 @@ MAINTAINER Sergio Exposito <sjexpos@gmail.com>
 # ENV REDIS_HOST           <redis server host name>
 # ENV REDIS_PORT           <redis server port>
 # ENV KAFKA_SERVERS        <kafka servers host name and port>
+# ENV KAFKA_EXTRAS
 # ENV TRACING_URL
 # ENV JWT_SECRET
 # ENV FORWARD_API_NAME
@@ -29,6 +30,7 @@ RUN echo "#!/usr/bin/env bash" > /opt/entrypoint.sh && \
     echo "echo \"REDIS_HOST: \$REDIS_HOST \" " >> /opt/entrypoint.sh && \
     echo "echo \"REDIS_PORT: \$REDIS_PORT \" " >> /opt/entrypoint.sh && \
     echo "echo \"KAFKA_SERVERS: \$KAFKA_SERVERS \" " >> /opt/entrypoint.sh && \
+    echo "echo \"KAFKA_EXTRAS: \$KAFKA_EXTRAS \" " >> /opt/entrypoint.sh && \
     echo "echo \"TRACING_URL: \$TRACING_URL \" " >> /opt/entrypoint.sh && \
     echo "echo \"JWT_SECRET: \$JWT_SECRET \" " >> /opt/entrypoint.sh && \
     echo "echo \"FORWARD_API_NAME: \$FORWARD_API_NAME \" " >> /opt/entrypoint.sh && \
@@ -43,6 +45,7 @@ RUN echo "#!/usr/bin/env bash" > /opt/entrypoint.sh && \
         -Dspring.data.redis.host=\$REDIS_HOST \
         -Dspring.data.redis.port=\$REDIS_PORT \
         -Dspring.kafka.bootstrap-servers=\$KAFKA_SERVERS \
+        \$KAFKA_EXTRAS \
         -Decomm.service.tracing.url=\$TRACING_URL \
         -Decomm.service.authentication.jwt.secret=\$JWT_SECRET \
         -Decomm.service.gateway.forward-api-name=\$FORWARD_API_NAME \
