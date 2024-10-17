@@ -20,6 +20,13 @@ spring:
             allowed-methods: GET, POST, PUT, DELETE, PATCH
   kafka:
     bootstrap-servers: localhost:9092
+    properties:
+      security:
+        protocol: PLAINTEXT
+      sasl:
+        mechanism: GSSAPI
+        jaas:
+          config:
     consumer:
       group-id: gateway-${ecomm.service.gateway.forward-api-name}
       max-poll-records: 100

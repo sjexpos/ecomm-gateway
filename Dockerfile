@@ -1,13 +1,16 @@
 FROM amazoncorretto:21-al2-jdk
 MAINTAINER Sergio Exposito <sjexpos@gmail.com>
 
-# ENV JAVA_XMS             <set initial Java heap size>
-# ENV JAVA_XMX             <set maximum Java heap size>
-# ENV PORT                 <port to run server>
+# ENV JAVA_XMS                 <set initial Java heap size>
+# ENV JAVA_XMX                 <set maximum Java heap size>
+# ENV PORT                     <port to run server>
 # ENV MONITORING_URL
-# ENV REDIS_HOST           <redis server host name>
-# ENV REDIS_PORT           <redis server port>
-# ENV KAFKA_SERVERS        <kafka servers host name and port>
+# ENV REDIS_HOST               <redis server host name>
+# ENV REDIS_PORT               <redis server port>
+# ENV KAFKA_SERVERS            <kafka servers host name and port>
+# ENV KAFKA_SECURITY_PROTOCOL
+# ENV KAFKA_SASL_MECHANISM
+# ENV KAFKA_SASL_JAAS_CONFIG
 # ENV KAFKA_EXTRAS
 # ENV TRACING_URL
 # ENV JWT_SECRET
@@ -30,6 +33,9 @@ RUN echo "#!/usr/bin/env bash" > /opt/entrypoint.sh && \
     echo "echo \"REDIS_HOST: \$REDIS_HOST \" " >> /opt/entrypoint.sh && \
     echo "echo \"REDIS_PORT: \$REDIS_PORT \" " >> /opt/entrypoint.sh && \
     echo "echo \"KAFKA_SERVERS: \$KAFKA_SERVERS \" " >> /opt/entrypoint.sh && \
+    echo "echo \"KAFKA_SECURITY_PROTOCOL: \$KAFKA_SECURITY_PROTOCOL \" " >> /opt/entrypoint.sh && \
+    echo "echo \"KAFKA_SASL_MECHANISM: \$KAFKA_SASL_MECHANISM \" " >> /opt/entrypoint.sh && \
+    echo "echo \"KAFKA_SASL_JAAS_CONFIG: \$KAFKA_SASL_JAAS_CONFIG \" " >> /opt/entrypoint.sh && \
     echo "echo \"KAFKA_EXTRAS: \$KAFKA_EXTRAS \" " >> /opt/entrypoint.sh && \
     echo "echo \"TRACING_URL: \$TRACING_URL \" " >> /opt/entrypoint.sh && \
     echo "echo \"JWT_SECRET: \$JWT_SECRET \" " >> /opt/entrypoint.sh && \
@@ -45,6 +51,9 @@ RUN echo "#!/usr/bin/env bash" > /opt/entrypoint.sh && \
         -Dspring.data.redis.host=\$REDIS_HOST \
         -Dspring.data.redis.port=\$REDIS_PORT \
         -Dspring.kafka.bootstrap-servers=\$KAFKA_SERVERS \
+        -Dspring.kafka.properties.security.protocol=\$KAFKA_SECURITY_PROTOCOL \
+        -Dspring.kafka.properties.sasl.mechanism=\$KAFKA_SASL_MECHANISM \
+        -Dspring.kafka.properties.sasl.jaas.config=\"\$KAFKA_SASL_JAAS_CONFIG\" \
         \$KAFKA_EXTRAS \
         -Decomm.service.tracing.url=\$TRACING_URL \
         -Decomm.service.authentication.jwt.secret=\$JWT_SECRET \
