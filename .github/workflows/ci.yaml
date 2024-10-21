@@ -81,21 +81,35 @@ jobs:
           path: ./
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3.7.0
+        with:
+          cosign-release: 'v2.4.1'
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5.5.1
+        with:
+          images: sjexposecomm/gateway
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: ./
           file: Dockerfile
           platforms: linux/amd64
-          push: true
-          tags: sjexposecomm/gateway:latest
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            sjexposecomm/gateway:latest
+            sjexposecomm/gateway:${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
 
   delete-unused-artifact:
     name: Delete unused artifact
