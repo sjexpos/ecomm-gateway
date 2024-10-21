@@ -79,6 +79,7 @@ public class ResponseAuditFilter implements GatewayFilter {
                         .status(response.getStatusCode().value())
                         .arrived(LocalDateTime.now())
                         .build();
+                log.info("Auditing response '{}' for user '{}'", audit.getId(), audit.getUserId());
                 this.messageKafkaTemplate.sendDefault(audit.getUserId(), audit);
             }
         }

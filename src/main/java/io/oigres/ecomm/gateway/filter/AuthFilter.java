@@ -36,18 +36,24 @@ public class AuthFilter implements GatewayFilter {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         if(!this.authenticationProperties.isEnabled()) {
-            log.info("Authentication is disabled. To enable it, make \"authentication.enabled\" property as true");
+            log.warn("Authentication is disabled. To enable it, make \"authentication.enabled\" property as true");
             return chain.filter(exchange);
         }
         String token ="";
         ServerHttpRequest request = exchange.getRequest();
         if(routeValidator.isSecured.test(request)) {
-            log.info("validating authentication token");
+            log.debug("validating authentication token");
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+                log.info("Header {} is missing", HttpHeaders.AUTHORIZATION);
                 throw new UnauthorizedException("Credential is missing");
             }
             String[] authParts = request.getHeaders().get(HttpHeaders.AUTHORIZATION).toString().split(" ");
             if (authParts.length < 2) {
+                log.info("Header {} does not have 2 parts", HttpHeaders.AUTHORIZATION);
+                throw new UnauthorizedException(String.format("%s header is malformed", HttpHeaders.AUTHORIZATION));
+            }
+            if (!"Bearer".equalsIgnoreCase(authParts[0])) {
+                log.info("Header {} does not have the prefix 'Bearer'", HttpHeaders.AUTHORIZATION);
                 throw new UnauthorizedException(String.format("%s header is malformed", HttpHeaders.AUTHORIZATION));
             }
             token = authParts[1];

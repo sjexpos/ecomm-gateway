@@ -65,6 +65,7 @@ public class RequestAuditFilter implements RewriteFunction<String,String> {
                     .body(requestBody)
                     .arrived(LocalDateTime.now())
                     .build();
+            log.info("Auditing request '{}' for user '{}'", audit.getId(), audit.getUserId());
             this.messageKafkaTemplate.sendDefault(audit.getUserId(), audit);
         }
         return requestBody == null ? Mono.empty() : Mono.just(requestBody);
