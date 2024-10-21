@@ -19,7 +19,7 @@ spring:
             allowed-origin-patterns: '*'
             allowed-methods: GET, POST, PUT, DELETE, PATCH
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: localhost:9091,localhost:9092,localhost:9093
     properties:
       security:
         protocol: PLAINTEXT
@@ -102,5 +102,10 @@ ecomm:
       auth-server-uri: http://localhost:6061
     limiter:
       topics:
-        incoming-request: incoming-request-topic
-        blacklisted-users: blacklisted-users-topic
+        incoming-request:
+          name: incoming-request-topic
+          partitions: 100
+          replication-factor: 2
+        blacklisted-users:
+          name: blacklisted-users-topic
+          concurrency: 10

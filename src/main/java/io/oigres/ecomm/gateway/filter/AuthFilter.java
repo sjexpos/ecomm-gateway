@@ -47,12 +47,12 @@ public class AuthFilter implements GatewayFilter {
                 log.info("Header {} is missing", HttpHeaders.AUTHORIZATION);
                 throw new UnauthorizedException("Credential is missing");
             }
-            String[] authParts = request.getHeaders().get(HttpHeaders.AUTHORIZATION).toString().split(" ");
+            String[] authParts = request.getHeaders().get(HttpHeaders.AUTHORIZATION).stream().findFirst().get().split(" ");
             if (authParts.length < 2) {
                 log.info("Header {} does not have 2 parts", HttpHeaders.AUTHORIZATION);
                 throw new UnauthorizedException(String.format("%s header is malformed", HttpHeaders.AUTHORIZATION));
             }
-            if (!"Bearer".equalsIgnoreCase(authParts[0])) {
+            if (!"bearer".equalsIgnoreCase(authParts[0])) {
                 log.info("Header {} does not have the prefix 'Bearer'", HttpHeaders.AUTHORIZATION);
                 throw new UnauthorizedException(String.format("%s header is malformed", HttpHeaders.AUTHORIZATION));
             }

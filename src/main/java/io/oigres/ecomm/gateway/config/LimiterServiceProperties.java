@@ -15,13 +15,30 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class LimiterServiceProperties {
 
     @Data
+    static public class IncomingRequestTopicProperties {
+        @NotNull
+        @NotBlank
+        private String name;
+        private int partitions;
+        private short replicationFactor;
+    }
+
+    @Data
+    static public class BlacklistedUsersTopicProperties {
+        @NotNull
+        @NotBlank
+        private String name;
+        private int concurrency;
+    }
+
+    @Data
     static public class Topics {
         @NotNull
         @NotBlank
-        private String incomingRequest;
+        private IncomingRequestTopicProperties incomingRequest;
         @NotNull
         @NotBlank
-        private String blacklistedUsers;
+        private BlacklistedUsersTopicProperties blacklistedUsers;
     }
 
     @NotNull

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class BlacklistedUsersListener {
     private final BlockedUserService blockedUserService;
 
-    @KafkaListener(topics = "${ecomm.service.limiter.topics.blacklisted-users}")
+    @KafkaListener(topics = "${ecomm.service.limiter.topics.blacklisted-users.name}")
     public void consumeMessage(ConsumerRecord<String, BlackedInfo> record) {
         log.info("Consumed kafka message from blacklisted users topic");
         BlackedInfo blackedInfo = record.value();
