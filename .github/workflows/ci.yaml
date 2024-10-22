@@ -1,8 +1,9 @@
 name: CI
 on:
   push:
-    branches:
-    - '**'
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "main" ]
     
 jobs:
 
@@ -16,45 +17,43 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
-      - name: Download dependencies
+      - name: Extract dependencies version
         run: |
-          pwd
-          ls -l
-          export VERSION=`mvn help:evaluate -Dexpression=project.version -q -DforceStdout`
-          echo -e "VERSION=$VERSION"
-          export USERS_API_ARTIFACT_ID=`curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-users-service/actions/artifacts | jq '.artifacts[] | "\(.id) \(.name)"' | tr -d '"' | grep users-service-api | head -n 1 | awk '{print $1}'`
-          echo -e "artifact=$USERS_API_ARTIFACT_ID"
-          curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-users-service/actions/artifacts/$USERS_API_ARTIFACT_ID/zip > users_api_artifact.zip
-          unzip users_api_artifact.zip
-          ls -l
-          mvn install:install-file -Dfile=users-service-api-$VERSION.jar -DgroupId=io.oigres.ecomm -DartifactId=users-service-api -Dversion=$VERSION -Dpackaging=jar -DgeneratePom=true
-          rm users-service-api-$VERSION.jar
-          rm users_api_artifact.zip
-          ls -l
-          export USERS_SDK_ARTIFACT_ID=`curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-users-service/actions/artifacts | jq '.artifacts[] | "\(.id) \(.name)"' | tr -d '"' | grep users-service-sdk | head -n 1 | awk '{print $1}'`
-          echo -e "artifact=$USERS_SDK_ARTIFACT_ID"
-          curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-users-service/actions/artifacts/$USERS_SDK_ARTIFACT_ID/zip > users_sdk_artifact.zip
-          unzip users_sdk_artifact.zip
-          ls -l
-          mvn install:install-file -Dfile=users-service-sdk-$VERSION.jar -DgroupId=io.oigres.ecomm -DartifactId=users-service-sdk -Dversion=$VERSION -Dpackaging=jar -DgeneratePom=true
-          rm users-service-sdk-$VERSION.jar
-          rm users_sdk_artifact.zip
-          export LIMITER_MODEL_ARTIFACT_ID=`curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-limiter/actions/artifacts | jq '.artifacts[] | "\(.id) \(.name)"' | tr -d '"' | grep limiter-service-model | head -n 1 | awk '{print $1}'`
-          echo -e "artifact=$LIMITER_MODEL_ARTIFACT_ID"
-          curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-limiter/actions/artifacts/$LIMITER_MODEL_ARTIFACT_ID/zip > limiter_model_artifact.zip
-          unzip limiter_model_artifact.zip
-          ls -l
-          mvn install:install-file -Dfile=limiter-service-model-$VERSION.jar -DgroupId=io.oigres.ecomm -DartifactId=limiter-service-model -Dversion=$VERSION -Dpackaging=jar -DgeneratePom=true
-          rm limiter-service-model-$VERSION.jar
-          rm limiter_model_artifact.zip
-          export CACHE_LIB_ARTIFACT_ID=`curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-limiter/actions/artifacts | jq '.artifacts[] | "\(.id) \(.name)"' | tr -d '"' | grep cache-lib | head -n 1 | awk '{print $1}'`
-          echo -e "artifact=$CACHE_LIB_ARTIFACT_ID"
-          curl -L -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" https://api.github.com/repos/sjexpos/ecomm-limiter/actions/artifacts/$CACHE_LIB_ARTIFACT_ID/zip > cache_lib_artifact.zip
-          unzip cache_lib_artifact.zip
-          ls -l
-          mvn install:install-file -Dfile=cache-lib-$VERSION.jar -DgroupId=io.oigres.ecomm -DartifactId=cache-lib -Dversion=$VERSION -Dpackaging=jar -DgeneratePom=true
-          rm cache-lib-$VERSION.jar
-          rm cache_lib_artifact.zip
+          version_value=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "version=$version_value"
+          echo "version=$version_value" >> $GITHUB_ENV
+      - name: Download users-service-api ${{ env.version }}
+        uses: sjexpos/ecomm-cicd-actions/.github/actions/install-dependency@main
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          github_repo: ecomm-users-service
+          group_id: io.oigres.ecomm
+          artifact_id: users-service-api
+          version: ${{ env.version }}
+      - name: Download users-service-sdk ${{ env.version }}
+        uses: sjexpos/ecomm-cicd-actions/.github/actions/install-dependency@main
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          github_repo: ecomm-users-service
+          group_id: io.oigres.ecomm
+          artifact_id: users-service-sdk
+          version: ${{ env.version }}
+      - name: Download limiter-service-model ${{ env.version }}
+        uses: sjexpos/ecomm-cicd-actions/.github/actions/install-dependency@main
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          github_repo: ecomm-limiter
+          group_id: io.oigres.ecomm
+          artifact_id: limiter-service-model
+          version: ${{ env.version }}
+      - name: Download cache-lib ${{ env.version }}
+        uses: sjexpos/ecomm-cicd-actions/.github/actions/install-dependency@main
+        with:
+          github_token: ${{ secrets.GH_TOKEN }}
+          github_repo: ecomm-limiter
+          group_id: io.oigres.ecomm
+          artifact_id: cache-lib
+          version: ${{ env.version }}
       - run: mvn --batch-mode --update-snapshots install
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4.0.1
@@ -70,7 +69,7 @@ jobs:
       compiled-sources-artifact-id: ${{ steps.upload-compiled-sources.outputs.artifact-id }}
 
   build-docker-image:
-    name: Create docker image
+    name: Create docker image & publish
     needs: [build-app]
     runs-on: ubuntu-latest
     steps:
@@ -79,37 +78,12 @@ jobs:
         with:
           name: compiled-sources
           path: ./
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - name: Install cosign
-        if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v3.7.0
+      - name: Docker build and publish
+        uses: sjexpos/ecomm-cicd-actions/.github/actions/docker-build-and-publish@main
         with:
-          cosign-release: 'v2.4.1'
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Login to Docker Hub
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5.5.1
-        with:
-          images: sjexposecomm/gateway
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: ./
-          file: Dockerfile
-          platforms: linux/amd64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            sjexposecomm/gateway:latest
-            sjexposecomm/gateway:${{ github.sha }}
-          labels: ${{ steps.meta.outputs.labels }}
+          registry_user: ${{ secrets.DOCKERHUB_USERNAME }}
+          registry_token: ${{ secrets.DOCKERHUB_TOKEN }}
+          image_name: sjexposecomm/gateway
 
   delete-unused-artifact:
     name: Delete unused artifact
