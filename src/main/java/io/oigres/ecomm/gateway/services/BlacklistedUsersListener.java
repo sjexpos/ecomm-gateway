@@ -15,7 +15,9 @@ public class BlacklistedUsersListener {
 
     @KafkaListener(topics = "${ecomm.service.limiter.topics.blacklisted-users.name}")
     public void consumeMessage(ConsumerRecord<String, BlackedInfo> record) {
-        log.info("Consumed kafka message from blacklisted users topic");
+        if (record != null) {
+            log.info("Consumed kafka message from '{}'/'{}' in offset '{}' with key '{}'  ", record.topic(), record.partition(), record.offset(), record.key());
+        }
         BlackedInfo blackedInfo = record.value();
         if (blackedInfo != null) {
             try {
