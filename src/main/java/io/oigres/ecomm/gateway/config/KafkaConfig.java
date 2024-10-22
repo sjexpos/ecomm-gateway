@@ -26,26 +26,26 @@ import java.util.Map;
 @EnableKafka
 public class KafkaConfig {
 
-    @Bean
-    public KafkaAdmin admin(@Value("${spring.kafka.bootstrap-servers}") String kafkaBrokers) {
-        Map<String, Object> configs = new HashMap<>();
-        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBrokers);
-        return new KafkaAdmin(configs);
-    }
+//    @Bean
+//    public KafkaAdmin admin(@Value("${spring.kafka.bootstrap-servers}") String kafkaBrokers) {
+//        Map<String, Object> configs = new HashMap<>();
+//        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBrokers);
+//        return new KafkaAdmin(configs);
+//    }
 
     @Bean
     public KafkaTemplate<String, Object> messageKafkaTemplate(
             ProducerFactory<String, Object> messageProducerFactory,
-            KafkaAdmin kafkaAdmin,
+//            KafkaAdmin kafkaAdmin,
             LimiterServiceProperties limiterServiceProperties
     ) {
-        kafkaAdmin.createOrModifyTopics(
-                new NewTopic(
-                        limiterServiceProperties.getTopics().getIncomingRequest().getName(),
-                        limiterServiceProperties.getTopics().getIncomingRequest().getPartitions(),
-                        limiterServiceProperties.getTopics().getIncomingRequest().getReplicationFactor()
-                )
-        );
+//        kafkaAdmin.createOrModifyTopics(
+//                new NewTopic(
+//                        limiterServiceProperties.getTopics().getIncomingRequest().getName(),
+//                        limiterServiceProperties.getTopics().getIncomingRequest().getPartitions(),
+//                        limiterServiceProperties.getTopics().getIncomingRequest().getReplicationFactor()
+//                )
+//        );
         KafkaTemplate<String, Object> template = new KafkaTemplate<>(messageProducerFactory);
         template.setDefaultTopic(limiterServiceProperties.getTopics().getIncomingRequest().getName());
         template.setObservationEnabled(true);
@@ -61,7 +61,7 @@ public class KafkaConfig {
         factory.setConsumerFactory(consumerFactory);
         factory.setConcurrency(limiterServiceProperties.getTopics().getBlacklistedUsers().getConcurrency());
         factory.getContainerProperties().setObservationEnabled(true);
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
         return factory;
     }
 

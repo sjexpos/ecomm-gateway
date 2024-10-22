@@ -27,7 +27,11 @@ spring:
         mechanism: GSSAPI
         jaas:
           config:
+    listener:
+      observation-enabled: true
     consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: true
       group-id: gateway-${ecomm.service.gateway.forward-api-name}
       max-poll-records: 100
       key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
@@ -40,8 +44,6 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      observation-enabled: true
-    listener:
       observation-enabled: true
   cache:
     type: redis
