@@ -12,14 +12,15 @@ import org.springframework.cloud.gateway.filter.factory.rewrite.RewriteFunction;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MimeTypeUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -109,20 +110,18 @@ public class OpenApiEnhacementRewriteFunction implements RewriteFunction<String,
     public Publisher<String> apply(ServerWebExchange t, String responseBody) {
         try {
             OpenAPI api = mapper.readValue(responseBody, OpenAPI.class);
-            enhaceOpenApiDescription(api);
+            enhaceOpenApiDescription(t.getRequest(), api);
             responseBody = mapper.writeValueAsString(api);
-        } catch (JsonMappingException e) {
-            log.error("OpenApi Enhacement failed: ", e);
         } catch (JsonProcessingException e) {
             log.error("OpenApi Enhacement failed: ", e);
         }
         return Mono.just(responseBody);
     }
 
-    private void enhaceOpenApiDescription(OpenAPI api) {
+    private void enhaceOpenApiDescription(ServerHttpRequest request, OpenAPI api) {
         addSecurityScheme(api);
         addIfNotPresent401Response(api.getPaths());
-        updateServersByGateway(api.getServers());
+        updateServersByGateway(request, api.getServers());
         addSignInOperation(api.getPaths(), api.getComponents());
     }
 
@@ -174,17 +173,20 @@ public class OpenApiEnhacementRewriteFunction implements RewriteFunction<String,
         }
     }
 
-    private void updateServersByGateway(List<Server> servers) {
+    private void updateServersByGateway(ServerHttpRequest request, List<Server> servers) {
         if (servers != null) {
-            servers.forEach(this::updateServerByGateway);
+            servers.forEach( s -> updateServerByGateway(request, s));
         }
     }
 
-    private void updateServerByGateway(Server server) {
+    private void updateServerByGateway(ServerHttpRequest request, Server server) {
         if (server.getUrl() != null) {
             server.setDescription(null);
             String scheme = this.environment.containsProperty("server.ssl") ? "https" : "http";
-            String newUrl = String.format("%s://%s:%d", scheme, this.gatewayName, this.gatewayPort);
+            String headerHost = request.getHeaders().getFirst(HttpHeaders.HOST);
+            String hostname = StringUtils.hasText(headerHost) ? headerHost.substring(0, headerHost.indexOf(":") > 0 ? headerHost.indexOf(":") : headerHost.length()) : this.gatewayName;
+            int port = StringUtils.hasText(headerHost) ? (headerHost.indexOf(":") > 0 ? Integer.parseInt(headerHost.substring(headerHost.indexOf(":")+1)) : 80) : this.gatewayPort;
+            String newUrl = String.format("%s://%s:%d", scheme, hostname, port);
             server.setUrl(newUrl);
         }
     }
