@@ -39,6 +39,7 @@ public class KafkaConfig {
 //            KafkaAdmin kafkaAdmin,
             LimiterServiceProperties limiterServiceProperties
     ) {
+// This topic creation from code requires more permission on Kafka, so it is commented
 //        kafkaAdmin.createOrModifyTopics(
 //                new NewTopic(
 //                        limiterServiceProperties.getTopics().getIncomingRequest().getName(),
