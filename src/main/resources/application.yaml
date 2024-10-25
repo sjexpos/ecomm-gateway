@@ -77,7 +77,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: info, health, httptrace, loggers, metrics, threaddump
+        include: "*"
   endpoint:
     health:
       probes:
