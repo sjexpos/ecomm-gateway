@@ -1,5 +1,6 @@
 FROM amazoncorretto:21-al2-jdk
-MAINTAINER Sergio Exposito <sjexpos@gmail.com>
+LABEL AUTHOR = 'Sergio Exposito'
+LABEL EMAIL = 'sjexpos@gmail.com'
 
 # ENV JAVA_XMS                 <set initial Java heap size>
 # ENV JAVA_XMX                 <set maximum Java heap size>
@@ -47,6 +48,7 @@ RUN echo "#!/usr/bin/env bash" > /opt/entrypoint.sh && \
     echo "java -Xms\$JAVA_XMS -Xmx\$JAVA_XMX \
         -Dserver.port=\$PORT \
         -Dmanagement.server.port=\$PORT \
+        -Dmanagement.otlp.tracing.endpoint=\$TRACING_URL \
         -Dspring.boot.admin.client.url=\$MONITORING_URL \
         -Dspring.data.redis.host=\$REDIS_HOST \
         -Dspring.data.redis.port=\$REDIS_PORT \
@@ -55,7 +57,6 @@ RUN echo "#!/usr/bin/env bash" > /opt/entrypoint.sh && \
         -Dspring.kafka.properties.sasl.mechanism=\$KAFKA_SASL_MECHANISM \
         -Dspring.kafka.properties.sasl.jaas.config=\"\$KAFKA_SASL_JAAS_CONFIG\" \
         \$KAFKA_EXTRAS \
-        -Decomm.service.tracing.url=\$TRACING_URL \
         -Decomm.service.authentication.jwt.secret=\$JWT_SECRET \
         -Decomm.service.gateway.forward-api-name=\$FORWARD_API_NAME \
         -Decomm.service.gateway.forward=\$FORWARD_URL \
