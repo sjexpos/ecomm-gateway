@@ -8,7 +8,7 @@ spring:
     admin:
       client:
         # Cloud Native Spring Admin Server is running
-        url: http://localhost:9090
+        url: http://localhost:10000
   application:
     name: gateway-${ecomm.service.gateway.forward-api-name}
   cloud:
