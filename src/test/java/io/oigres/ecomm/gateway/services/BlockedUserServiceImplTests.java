@@ -1,17 +1,34 @@
-package io.oigres.ecomm.gateway.services;
+/**********
+ This project is free software; you can redistribute it and/or modify it under
+ the terms of the GNU General Public License as published by the
+ Free Software Foundation; either version 3.0 of the License, or (at your
+ option) any later version. (See <https://www.gnu.org/licenses/gpl-3.0.html>.)
 
-import io.oigres.ecomm.gateway.model.BlackInfoBlockedUserMapper;
-import io.oigres.ecomm.gateway.model.BlockedUser;
-import io.oigres.ecomm.service.limiter.BlackedInfo;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+ This project is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this project; if not, write to the Free Software Foundation, Inc.,
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+ **********/
+// Copyright (c) 2024-2025 Sergio Exposito.  All rights reserved.              
+
+package io.oigres.ecomm.gateway.services;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.*;
 
+import io.oigres.ecomm.gateway.model.BlackInfoBlockedUserMapper;
+import io.oigres.ecomm.gateway.model.BlockedUser;
+import io.oigres.ecomm.service.limiter.BlackedInfo;
+import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -20,237 +37,244 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.time.LocalDateTime;
-import java.util.concurrent.atomic.AtomicReference;
-
 @ExtendWith(SpringExtension.class)
 public class BlockedUserServiceImplTests {
-    @TestConfiguration
-    @ComponentScan(basePackageClasses={BlockedUserService.class, BlackInfoBlockedUserMapper.class})
-    static class TestConfig {}
+  @TestConfiguration
+  @ComponentScan(basePackageClasses = {BlockedUserService.class, BlackInfoBlockedUserMapper.class})
+  static class TestConfig {}
 
-    @MockBean(name = "caffeineCacheManager")
-    CacheManager caffeineCacheManager;
-    @MockBean(name = "redisCacheManager")
-    CacheManager redisCacheManager;
-    @Autowired
-    BlockedUserService blockedUserService;
+  @MockBean(name = "caffeineCacheManager")
+  CacheManager caffeineCacheManager;
 
-    @Test
-    void test_retrieveBlockedUserFor_default_flow() {
-        // given
-        String userId = "user14@yopmail.com";
+  @MockBean(name = "redisCacheManager")
+  CacheManager redisCacheManager;
 
-        //when
-        BlockedUser actualBlockedUser = this.blockedUserService.retrieveBlockedUserFor(userId);
+  @Autowired BlockedUserService blockedUserService;
 
-        // then
-        Assertions.assertNull(actualBlockedUser);
-    }
+  @Test
+  void test_retrieveBlockedUserFor_default_flow() {
+    // given
+    String userId = "user14@yopmail.com";
 
-    @Test
-    void test_processBlackedInfo_non_cached() {
-        // given
-        String userId = "user14@yopmail.com";
-        LocalDateTime from = LocalDateTime.now().minusHours(2);
-        LocalDateTime to = LocalDateTime.now();
-        Cache redisCache = mock(Cache.class);
-        Mockito.doReturn(redisCache).when(this.redisCacheManager).getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
-        Mockito.doReturn(null).when(redisCache).get(eq(userId), eq(BlockedUser.class));
-        AtomicReference<String> putUserId = new AtomicReference<>();
-        AtomicReference<BlockedUser> putBlockedUser = new AtomicReference<>();
-        Mockito.doAnswer(invocation -> {
-            String invokedUserId = invocation.getArgument(0);
-            BlockedUser invokedBlockedUser = invocation.getArgument(1);
-            putUserId.set(invokedUserId);
-            putBlockedUser.set(invokedBlockedUser);
-            return null;
-        }).when(redisCache).put(any(), any());
-        Cache caffeineCache = mock(Cache.class);
-        Mockito.doReturn(caffeineCache).when(this.caffeineCacheManager).getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
+    // when
+    BlockedUser actualBlockedUser = this.blockedUserService.retrieveBlockedUserFor(userId);
 
-        // when
-        BlackedInfo blackedInfo = BlackedInfo.builder()
-                .userId(userId)
-                .from(from)
-                .to(to)
-                .build();
-        this.blockedUserService.processBlackedInfo(blackedInfo);
+    // then
+    Assertions.assertNull(actualBlockedUser);
+  }
 
-        // then
-        Assertions.assertEquals(userId, putUserId.get());
-        Assertions.assertEquals(userId, putBlockedUser.get().getUserId());
-        Assertions.assertEquals(from, putBlockedUser.get().getFrom());
-        Assertions.assertEquals(to, putBlockedUser.get().getTo());
-        Mockito.verify(caffeineCache).evict(eq(userId));
-    }
+  @Test
+  void test_processBlackedInfo_non_cached() {
+    // given
+    String userId = "user14@yopmail.com";
+    LocalDateTime from = LocalDateTime.now().minusHours(2);
+    LocalDateTime to = LocalDateTime.now();
+    Cache redisCache = mock(Cache.class);
+    Mockito.doReturn(redisCache)
+        .when(this.redisCacheManager)
+        .getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
+    Mockito.doReturn(null).when(redisCache).get(eq(userId), eq(BlockedUser.class));
+    AtomicReference<String> putUserId = new AtomicReference<>();
+    AtomicReference<BlockedUser> putBlockedUser = new AtomicReference<>();
+    Mockito.doAnswer(
+            invocation -> {
+              String invokedUserId = invocation.getArgument(0);
+              BlockedUser invokedBlockedUser = invocation.getArgument(1);
+              putUserId.set(invokedUserId);
+              putBlockedUser.set(invokedBlockedUser);
+              return null;
+            })
+        .when(redisCache)
+        .put(any(), any());
+    Cache caffeineCache = mock(Cache.class);
+    Mockito.doReturn(caffeineCache)
+        .when(this.caffeineCacheManager)
+        .getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
 
-    @Test
-    void test_processBlackedInfo_data_cached_but_not_blocked() {
-        // given
-        String userId = "user14@yopmail.com";
-        LocalDateTime from = LocalDateTime.now().minusMinutes(5);
-        LocalDateTime to = LocalDateTime.now();
-        Cache redisCache = mock(Cache.class);
-        Mockito.doReturn(redisCache).when(this.redisCacheManager).getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
-        BlockedUser cachedBlockedUser = BlockedUser.builder()
-                .userId(userId)
-                .from(LocalDateTime.now().minusHours(10))
-                .to(LocalDateTime.now().minusHours(6))
-                .build();
-        Mockito.doReturn(cachedBlockedUser).when(redisCache).get(eq(userId), eq(BlockedUser.class));
-        AtomicReference<String> putUserId = new AtomicReference<>();
-        AtomicReference<BlockedUser> putBlockedUser = new AtomicReference<>();
-        Mockito.doAnswer(invocation -> {
-            String invokedUserId = invocation.getArgument(0);
-            BlockedUser invokedBlockedUser = invocation.getArgument(1);
-            putUserId.set(invokedUserId);
-            putBlockedUser.set(invokedBlockedUser);
-            return null;
-        }).when(redisCache).put(any(), any());
-        Cache caffeineCache = mock(Cache.class);
-        Mockito.doReturn(caffeineCache).when(this.caffeineCacheManager).getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
+    // when
+    BlackedInfo blackedInfo = BlackedInfo.builder().userId(userId).from(from).to(to).build();
+    this.blockedUserService.processBlackedInfo(blackedInfo);
 
-        // when
-        BlackedInfo blackedInfo = BlackedInfo.builder()
-                .userId(userId)
-                .from(from)
-                .to(to)
-                .build();
-        this.blockedUserService.processBlackedInfo(blackedInfo);
+    // then
+    Assertions.assertEquals(userId, putUserId.get());
+    Assertions.assertEquals(userId, putBlockedUser.get().getUserId());
+    Assertions.assertEquals(from, putBlockedUser.get().getFrom());
+    Assertions.assertEquals(to, putBlockedUser.get().getTo());
+    Mockito.verify(caffeineCache).evict(eq(userId));
+  }
 
-        // then
-        Assertions.assertEquals(userId, putUserId.get());
-        Assertions.assertEquals(userId, putBlockedUser.get().getUserId());
-        Assertions.assertEquals(from, putBlockedUser.get().getFrom());
-        Assertions.assertEquals(to, putBlockedUser.get().getTo());
-        Mockito.verify(caffeineCache).evict(eq(userId));
-    }
+  @Test
+  void test_processBlackedInfo_data_cached_but_not_blocked() {
+    // given
+    String userId = "user14@yopmail.com";
+    LocalDateTime from = LocalDateTime.now().minusMinutes(5);
+    LocalDateTime to = LocalDateTime.now();
+    Cache redisCache = mock(Cache.class);
+    Mockito.doReturn(redisCache)
+        .when(this.redisCacheManager)
+        .getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
+    BlockedUser cachedBlockedUser =
+        BlockedUser.builder()
+            .userId(userId)
+            .from(LocalDateTime.now().minusHours(10))
+            .to(LocalDateTime.now().minusHours(6))
+            .build();
+    Mockito.doReturn(cachedBlockedUser).when(redisCache).get(eq(userId), eq(BlockedUser.class));
+    AtomicReference<String> putUserId = new AtomicReference<>();
+    AtomicReference<BlockedUser> putBlockedUser = new AtomicReference<>();
+    Mockito.doAnswer(
+            invocation -> {
+              String invokedUserId = invocation.getArgument(0);
+              BlockedUser invokedBlockedUser = invocation.getArgument(1);
+              putUserId.set(invokedUserId);
+              putBlockedUser.set(invokedBlockedUser);
+              return null;
+            })
+        .when(redisCache)
+        .put(any(), any());
+    Cache caffeineCache = mock(Cache.class);
+    Mockito.doReturn(caffeineCache)
+        .when(this.caffeineCacheManager)
+        .getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
 
-    @Test
-    void test_processBlackedInfo_data_cached_and_already_blocked_case1() {
-        // given
-        String userId = "user14@yopmail.com";
-        LocalDateTime cachedFrom = LocalDateTime.now().minusMinutes(5);
-        LocalDateTime cachedTo = LocalDateTime.now().plusMinutes(5);
-        LocalDateTime from = LocalDateTime.now().minusMinutes(2);
-        LocalDateTime to = LocalDateTime.now().plusMinutes(8);
-        Cache redisCache = mock(Cache.class);
-        Mockito.doReturn(redisCache).when(this.redisCacheManager).getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
-        BlockedUser cachedBlockedUser = BlockedUser.builder()
-                .userId(userId)
-                .from(cachedFrom)
-                .to(cachedTo)
-                .build();
-        Mockito.doReturn(cachedBlockedUser).when(redisCache).get(eq(userId), eq(BlockedUser.class));
-        AtomicReference<String> putUserId = new AtomicReference<>();
-        AtomicReference<BlockedUser> putBlockedUser = new AtomicReference<>();
-        Mockito.doAnswer(invocation -> {
-            String invokedUserId = invocation.getArgument(0);
-            BlockedUser invokedBlockedUser = invocation.getArgument(1);
-            putUserId.set(invokedUserId);
-            putBlockedUser.set(invokedBlockedUser);
-            return null;
-        }).when(redisCache).put(any(), any());
-        Cache caffeineCache = mock(Cache.class);
-        Mockito.doReturn(caffeineCache).when(this.caffeineCacheManager).getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
+    // when
+    BlackedInfo blackedInfo = BlackedInfo.builder().userId(userId).from(from).to(to).build();
+    this.blockedUserService.processBlackedInfo(blackedInfo);
 
-        // when
-        BlackedInfo blackedInfo = BlackedInfo.builder()
-                .userId(userId)
-                .from(from)
-                .to(to)
-                .build();
-        this.blockedUserService.processBlackedInfo(blackedInfo);
+    // then
+    Assertions.assertEquals(userId, putUserId.get());
+    Assertions.assertEquals(userId, putBlockedUser.get().getUserId());
+    Assertions.assertEquals(from, putBlockedUser.get().getFrom());
+    Assertions.assertEquals(to, putBlockedUser.get().getTo());
+    Mockito.verify(caffeineCache).evict(eq(userId));
+  }
 
-        // then
-        Assertions.assertEquals(userId, putUserId.get());
-        Assertions.assertEquals(userId, putBlockedUser.get().getUserId());
-        Assertions.assertEquals(cachedFrom, putBlockedUser.get().getFrom());
-        Assertions.assertEquals(cachedTo, putBlockedUser.get().getTo());
-        Mockito.verify(caffeineCache).evict(eq(userId));
-    }
+  @Test
+  void test_processBlackedInfo_data_cached_and_already_blocked_case1() {
+    // given
+    String userId = "user14@yopmail.com";
+    LocalDateTime cachedFrom = LocalDateTime.now().minusMinutes(5);
+    LocalDateTime cachedTo = LocalDateTime.now().plusMinutes(5);
+    LocalDateTime from = LocalDateTime.now().minusMinutes(2);
+    LocalDateTime to = LocalDateTime.now().plusMinutes(8);
+    Cache redisCache = mock(Cache.class);
+    Mockito.doReturn(redisCache)
+        .when(this.redisCacheManager)
+        .getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
+    BlockedUser cachedBlockedUser =
+        BlockedUser.builder().userId(userId).from(cachedFrom).to(cachedTo).build();
+    Mockito.doReturn(cachedBlockedUser).when(redisCache).get(eq(userId), eq(BlockedUser.class));
+    AtomicReference<String> putUserId = new AtomicReference<>();
+    AtomicReference<BlockedUser> putBlockedUser = new AtomicReference<>();
+    Mockito.doAnswer(
+            invocation -> {
+              String invokedUserId = invocation.getArgument(0);
+              BlockedUser invokedBlockedUser = invocation.getArgument(1);
+              putUserId.set(invokedUserId);
+              putBlockedUser.set(invokedBlockedUser);
+              return null;
+            })
+        .when(redisCache)
+        .put(any(), any());
+    Cache caffeineCache = mock(Cache.class);
+    Mockito.doReturn(caffeineCache)
+        .when(this.caffeineCacheManager)
+        .getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
 
-    @Test
-    void test_processBlackedInfo_data_cached_and_already_blocked_case2() {
-        // given
-        String userId = "user14@yopmail.com";
-        LocalDateTime cachedFrom = LocalDateTime.now().minusMinutes(3);
-        LocalDateTime cachedTo = LocalDateTime.now().plusMinutes(3);
-        LocalDateTime from = LocalDateTime.now().minusMinutes(5);
-        LocalDateTime to = LocalDateTime.now().plusMinutes(1);
-        Cache redisCache = mock(Cache.class);
-        Mockito.doReturn(redisCache).when(this.redisCacheManager).getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
-        BlockedUser cachedBlockedUser = BlockedUser.builder()
-                .userId(userId)
-                .from(cachedFrom)
-                .to(cachedTo)
-                .build();
-        Mockito.doReturn(cachedBlockedUser).when(redisCache).get(eq(userId), eq(BlockedUser.class));
-        AtomicReference<String> putUserId = new AtomicReference<>();
-        AtomicReference<BlockedUser> putBlockedUser = new AtomicReference<>();
-        Mockito.doAnswer(invocation -> {
-            String invokedUserId = invocation.getArgument(0);
-            BlockedUser invokedBlockedUser = invocation.getArgument(1);
-            putUserId.set(invokedUserId);
-            putBlockedUser.set(invokedBlockedUser);
-            return null;
-        }).when(redisCache).put(any(), any());
-        Cache caffeineCache = mock(Cache.class);
-        Mockito.doReturn(caffeineCache).when(this.caffeineCacheManager).getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
+    // when
+    BlackedInfo blackedInfo = BlackedInfo.builder().userId(userId).from(from).to(to).build();
+    this.blockedUserService.processBlackedInfo(blackedInfo);
 
-        // when
-        BlackedInfo blackedInfo = BlackedInfo.builder()
-                .userId(userId)
-                .from(from)
-                .to(to)
-                .build();
-        this.blockedUserService.processBlackedInfo(blackedInfo);
+    // then
+    Assertions.assertEquals(userId, putUserId.get());
+    Assertions.assertEquals(userId, putBlockedUser.get().getUserId());
+    Assertions.assertEquals(cachedFrom, putBlockedUser.get().getFrom());
+    Assertions.assertEquals(cachedTo, putBlockedUser.get().getTo());
+    Mockito.verify(caffeineCache).evict(eq(userId));
+  }
 
-        // then
-        Assertions.assertEquals(userId, putUserId.get());
-        Assertions.assertEquals(userId, putBlockedUser.get().getUserId());
-        Assertions.assertEquals(from, putBlockedUser.get().getFrom());
-        Assertions.assertEquals(to, putBlockedUser.get().getTo());
-        Mockito.verify(caffeineCache).evict(eq(userId));
-    }
+  @Test
+  void test_processBlackedInfo_data_cached_and_already_blocked_case2() {
+    // given
+    String userId = "user14@yopmail.com";
+    LocalDateTime cachedFrom = LocalDateTime.now().minusMinutes(3);
+    LocalDateTime cachedTo = LocalDateTime.now().plusMinutes(3);
+    LocalDateTime from = LocalDateTime.now().minusMinutes(5);
+    LocalDateTime to = LocalDateTime.now().plusMinutes(1);
+    Cache redisCache = mock(Cache.class);
+    Mockito.doReturn(redisCache)
+        .when(this.redisCacheManager)
+        .getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
+    BlockedUser cachedBlockedUser =
+        BlockedUser.builder().userId(userId).from(cachedFrom).to(cachedTo).build();
+    Mockito.doReturn(cachedBlockedUser).when(redisCache).get(eq(userId), eq(BlockedUser.class));
+    AtomicReference<String> putUserId = new AtomicReference<>();
+    AtomicReference<BlockedUser> putBlockedUser = new AtomicReference<>();
+    Mockito.doAnswer(
+            invocation -> {
+              String invokedUserId = invocation.getArgument(0);
+              BlockedUser invokedBlockedUser = invocation.getArgument(1);
+              putUserId.set(invokedUserId);
+              putBlockedUser.set(invokedBlockedUser);
+              return null;
+            })
+        .when(redisCache)
+        .put(any(), any());
+    Cache caffeineCache = mock(Cache.class);
+    Mockito.doReturn(caffeineCache)
+        .when(this.caffeineCacheManager)
+        .getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
 
-    @Test
-    void test_processBlackedInfo_default_flow() {
-        // given
-        String userId = "user14@yopmail.com";
-        LocalDateTime from = LocalDateTime.now().minusHours(2);
-        LocalDateTime to = LocalDateTime.now();
-        BlackedInfo blackedInfo = BlackedInfo.builder()
-                .userId(userId)
-                .from(from)
-                .to(to)
-                .build();
+    // when
+    BlackedInfo blackedInfo = BlackedInfo.builder().userId(userId).from(from).to(to).build();
+    this.blockedUserService.processBlackedInfo(blackedInfo);
 
-        Cache redisCache = mock(Cache.class);
-        Mockito.doReturn(redisCache).when(this.redisCacheManager).getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
-        Mockito.doReturn(null).when(redisCache).get(eq(userId), eq(BlockedUser.class));
-        AtomicReference<String> putUserId = new AtomicReference<>();
-        AtomicReference<BlockedUser> putBlockedUser = new AtomicReference<>();
-        Mockito.doAnswer(invocation -> {
-            String invokedUserId = invocation.getArgument(0);
-            BlockedUser invokedBlockedUser = invocation.getArgument(1);
-            putUserId.set(invokedUserId);
-            putBlockedUser.set(invokedBlockedUser);
-            return null;
-        }).when(redisCache).put(any(), any());
-        Cache caffeineCache = mock(Cache.class);
-        Mockito.doReturn(caffeineCache).when(this.caffeineCacheManager).getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
+    // then
+    Assertions.assertEquals(userId, putUserId.get());
+    Assertions.assertEquals(userId, putBlockedUser.get().getUserId());
+    Assertions.assertEquals(from, putBlockedUser.get().getFrom());
+    Assertions.assertEquals(to, putBlockedUser.get().getTo());
+    Mockito.verify(caffeineCache).evict(eq(userId));
+  }
 
-        // when
-        this.blockedUserService.processBlackedInfo(blackedInfo);
+  @Test
+  void test_processBlackedInfo_default_flow() {
+    // given
+    String userId = "user14@yopmail.com";
+    LocalDateTime from = LocalDateTime.now().minusHours(2);
+    LocalDateTime to = LocalDateTime.now();
+    BlackedInfo blackedInfo = BlackedInfo.builder().userId(userId).from(from).to(to).build();
 
-        // then
-        Assertions.assertEquals(userId, putUserId.get());
-        Assertions.assertEquals(userId, putBlockedUser.get().getUserId());
-        Assertions.assertEquals(from, putBlockedUser.get().getFrom());
-        Assertions.assertEquals(to, putBlockedUser.get().getTo());
-        Mockito.verify(caffeineCache).evict(eq(userId));
-    }
+    Cache redisCache = mock(Cache.class);
+    Mockito.doReturn(redisCache)
+        .when(this.redisCacheManager)
+        .getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
+    Mockito.doReturn(null).when(redisCache).get(eq(userId), eq(BlockedUser.class));
+    AtomicReference<String> putUserId = new AtomicReference<>();
+    AtomicReference<BlockedUser> putBlockedUser = new AtomicReference<>();
+    Mockito.doAnswer(
+            invocation -> {
+              String invokedUserId = invocation.getArgument(0);
+              BlockedUser invokedBlockedUser = invocation.getArgument(1);
+              putUserId.set(invokedUserId);
+              putBlockedUser.set(invokedBlockedUser);
+              return null;
+            })
+        .when(redisCache)
+        .put(any(), any());
+    Cache caffeineCache = mock(Cache.class);
+    Mockito.doReturn(caffeineCache)
+        .when(this.caffeineCacheManager)
+        .getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
 
+    // when
+    this.blockedUserService.processBlackedInfo(blackedInfo);
+
+    // then
+    Assertions.assertEquals(userId, putUserId.get());
+    Assertions.assertEquals(userId, putBlockedUser.get().getUserId());
+    Assertions.assertEquals(from, putBlockedUser.get().getFrom());
+    Assertions.assertEquals(to, putBlockedUser.get().getTo());
+    Mockito.verify(caffeineCache).evict(eq(userId));
+  }
 }
