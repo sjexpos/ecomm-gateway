@@ -74,7 +74,7 @@ public class RequestAuditFilter implements RewriteFunction<String, String> {
           RequestAudit.builder()
               .id(request.getId())
               .userId(claims.getSubject())
-              .remoteAddr(request.getRemoteAddress().toString())
+              .remoteAddr(String.valueOf(request.getRemoteAddress()))
               .method(request.getMethod().name())
               .path(request.getPath().value())
               .query(request.getQueryParams())

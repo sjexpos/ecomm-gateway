@@ -22,6 +22,8 @@ import io.oigres.ecomm.gateway.config.AuthenticationProperties;
 import io.oigres.ecomm.gateway.exceptions.UnauthorizedException;
 import io.oigres.ecomm.gateway.util.JWTUtil;
 import io.oigres.ecomm.gateway.validator.RouteValidator;
+import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -66,8 +68,11 @@ public class AuthFilter implements GatewayFilter {
         log.info("Header {} is missing", HttpHeaders.AUTHORIZATION);
         throw new UnauthorizedException("Credential is missing");
       }
+      List<String> authHeaders = request.getHeaders().get(HttpHeaders.AUTHORIZATION);
       String[] authParts =
-          request.getHeaders().get(HttpHeaders.AUTHORIZATION).stream().findFirst().get().split(" ");
+          Objects.isNull(authHeaders)
+              ? new String[0]
+              : authHeaders.stream().findFirst().orElse("").split(" ");
       if (authParts.length < 2) {
         log.info("Header {} does not have 2 parts", HttpHeaders.AUTHORIZATION);
         throw new UnauthorizedException(

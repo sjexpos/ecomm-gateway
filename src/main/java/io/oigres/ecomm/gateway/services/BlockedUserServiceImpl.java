@@ -22,6 +22,7 @@ import io.oigres.ecomm.gateway.model.BlackInfoBlockedUserMapper;
 import io.oigres.ecomm.gateway.model.BlockedUser;
 import io.oigres.ecomm.service.limiter.BlackedInfo;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -59,9 +60,13 @@ public class BlockedUserServiceImpl implements BlockedUserService {
         blockedUser.getUserId(),
         blockedUser.getFrom(),
         blockedUser.getTo());
-    Cache redisCache = this.redisCacheManager.getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
+    Cache redisCache =
+        Optional.ofNullable(this.redisCacheManager.getCache(CacheNames.BLOCKED_USERS_CACHE_NAME))
+            .orElseThrow(IllegalStateException::new);
     redisCache.put(blockedUser.getUserId(), blockedUser);
-    Cache caffeineCache = this.caffeineCacheManager.getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
+    Cache caffeineCache =
+        Optional.ofNullable(this.caffeineCacheManager.getCache(CacheNames.BLOCKED_USERS_CACHE_NAME))
+            .orElseThrow(IllegalStateException::new);
     caffeineCache.evict(blockedUser.getUserId()); // refresh first cache level
   }
 
@@ -70,7 +75,9 @@ public class BlockedUserServiceImpl implements BlockedUserService {
     if (!StringUtils.hasText(info.getUserId())) {
       return;
     }
-    Cache redisCache = this.redisCacheManager.getCache(CacheNames.BLOCKED_USERS_CACHE_NAME);
+    Cache redisCache =
+        Optional.ofNullable(this.redisCacheManager.getCache(CacheNames.BLOCKED_USERS_CACHE_NAME))
+            .orElseThrow(IllegalStateException::new);
     BlockedUser cachedBlockedUser = redisCache.get(info.getUserId(), BlockedUser.class);
     if (cachedBlockedUser == null || !cachedBlockedUser.isBlock(LocalDateTime.now())) {
       cachedBlockedUser = this.mapper.from(info);
@@ -83,11 +90,11 @@ public class BlockedUserServiceImpl implements BlockedUserService {
               .from(
                   Stream.of(info.getFrom(), cachedBlockedUser.getFrom())
                       .min(LocalDateTime::compareTo)
-                      .get())
+                      .orElse(null))
               .to(
                   Stream.of(info.getTo(), cachedBlockedUser.getTo())
                       .min(LocalDateTime::compareTo)
-                      .get())
+                      .orElse(null))
               .build();
       updateCachedBlockedUser(cachedBlockedUser);
     }

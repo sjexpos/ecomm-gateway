@@ -22,10 +22,12 @@ import io.oigres.ecomm.service.limiter.ResponseAudit;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -92,7 +94,10 @@ public class ResponseAuditFilter implements GatewayFilter {
                 .userId(claims.getSubject())
                 .headers(response.getHeaders())
                 .cookies(getCookies(response.getCookies()))
-                .status(response.getStatusCode().value())
+                .status(
+                    Optional.ofNullable(response.getStatusCode())
+                        .map(HttpStatusCode::value)
+                        .orElse(-1))
                 .arrived(LocalDateTime.now())
                 .build();
         log.info("Auditing response '{}' for user '{}'", audit.getId(), audit.getUserId());

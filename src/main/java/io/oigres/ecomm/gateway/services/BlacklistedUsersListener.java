@@ -18,6 +18,7 @@
 package io.oigres.ecomm.gateway.services;
 
 import io.oigres.ecomm.service.limiter.BlackedInfo;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -40,7 +41,7 @@ public class BlacklistedUsersListener {
           record.offset(),
           record.key());
     }
-    BlackedInfo blackedInfo = record.value();
+    BlackedInfo blackedInfo = Objects.isNull(record) ? null : record.value();
     if (blackedInfo != null) {
       try {
         blockedUserService.processBlackedInfo(blackedInfo);
